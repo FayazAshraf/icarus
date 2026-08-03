@@ -1,5 +1,6 @@
 const EDSM = require('../edsm')
 const SystemMap = require('../system-map')
+const { getBodiesFromJournal } = require('../journal-bodies')
 const { UNKNOWN_VALUE } = require('../../../shared/consts')
 const distance = require('../../../shared/distance')
 
@@ -96,6 +97,29 @@ class System {
       // system and merge data with about bodies and stations from EDSM,
       // overwriting data from EDSM with with more recent local where there are
       // conflicts.
+
+      // EDSM has no bodies for systems nobody has explored and uploaded yet, so
+      // add in any bodies the player has scanned themselves. EDSM is left as
+      // the source of truth for bodies it does know about.
+      // See: https://github.com/iaincollins/icarus/issues/85
+      const bodiesFromJournal = await getBodiesFromJournal(this.eliteLog, systemName)
+      if (bodiesFromJournal.length > 0) {
+        if (!system.bodies) system.bodies = []
+        const bodyIdsFromEDSM = system.bodies.map(body => body.bodyId)
+        system.bodies = system.bodies
+          .concat(bodiesFromJournal.filter(body => !bodyIdsFromEDSM.includes(body.bodyId)))
+          .sort((a, b) => a.bodyId - b.bodyId)
+
+        // If EDSM doesn't know the system at all we can still name and place it
+        // using the player's own logs
+        if (system.name === UNKNOWN_VALUE) system.name = systemName
+        if (system.address === UNKNOWN_VALUE && currentLocation?.address && systemName.toLowerCase() === currentLocation?.name?.toLowerCase()) {
+          system.address = currentLocation.address
+        }
+        if (!system.position && currentLocation?.position && systemName.toLowerCase() === currentLocation?.name?.toLowerCase()) {
+          system.position = currentLocation.position
+        }
+      }
 
       // Merge in local scan data with information about the body
       if (system?.bodies) {
