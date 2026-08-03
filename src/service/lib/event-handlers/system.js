@@ -105,7 +105,10 @@ class System {
       const bodiesFromJournal = await getBodiesFromJournal(this.eliteLog, systemName)
       if (bodiesFromJournal.length > 0) {
         if (!system.bodies) system.bodies = []
-        const bodyIdsFromEDSM = system.bodies.map(body => body.bodyId)
+        // EDSM returns a null body id for the main star in some systems (the
+        // same quirk SystemMap patches around) so treat that as body id 0,
+        // otherwise we add the star a second time from the journal
+        const bodyIdsFromEDSM = system.bodies.map(body => (body.type === 'Star' && body.bodyId === null) ? 0 : body.bodyId)
         system.bodies = system.bodies
           .concat(bodiesFromJournal.filter(body => !bodyIdsFromEDSM.includes(body.bodyId)))
           .sort((a, b) => a.bodyId - b.bodyId)
