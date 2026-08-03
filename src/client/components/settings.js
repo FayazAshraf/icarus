@@ -1,93 +1,124 @@
-import { useState, useEffect, Fragment } from 'react'
-import { sendEvent, eventListener } from 'lib/socket'
-import { SettingsNavItems } from 'lib/navigation-items'
-import packageJson from '../../../package.json'
+import { useState, useEffect, Fragment } from "react";
+import { sendEvent, eventListener } from "lib/socket";
+import { SettingsNavItems } from "lib/navigation-items";
+import packageJson from "../../../package.json";
 
-function Settings ({ visible, toggleVisible = () => {}, defaultActiveSettingsPanel = 'Theme' }) {
-  const [activeSettingsPanel, setActiveSettingsPanel] = useState(defaultActiveSettingsPanel)
+function Settings({
+  visible,
+  toggleVisible = () => {},
+  defaultActiveSettingsPanel = "Theme",
+}) {
+  const [activeSettingsPanel, setActiveSettingsPanel] = useState(
+    defaultActiveSettingsPanel,
+  );
 
   return (
     <>
-      <div className='modal-dialog__background' style={{ opacity: visible ? 1 : 0, visibility: visible ? 'visible' : 'hidden' }} onClick={toggleVisible} />
-      <div className='modal-dialog' style={{ opacity: visible ? 1 : 0, visibility: visible ? 'visible' : 'hidden' }}>
-        <h2 className='modal-dialog__title'>Settings</h2>
+      <div
+        className="modal-dialog__background"
+        style={{
+          opacity: visible ? 1 : 0,
+          visibility: visible ? "visible" : "hidden",
+        }}
+        onClick={toggleVisible}
+      />
+      <div
+        className="modal-dialog"
+        style={{
+          opacity: visible ? 1 : 0,
+          visibility: visible ? "visible" : "hidden",
+        }}
+      >
+        <h2 className="modal-dialog__title">Settings</h2>
         <hr />
-        <div className='secondary-navigation modal-dialog__navigation'>
-          {SettingsNavItems(activeSettingsPanel).map(item =>
+        <div className="secondary-navigation modal-dialog__navigation">
+          {SettingsNavItems(activeSettingsPanel).map((item) => (
             <Fragment key={item.name}>
               <button
-                tabIndex='2'
-                className={`button--icon ${item.active ? 'button--active' : ''}`}
+                tabIndex="2"
+                className={`button--icon ${item.active ? "button--active" : ""}`}
                 onClick={() => setActiveSettingsPanel(item.name)}
               >
                 <i className={`icon icarus-terminal-${item.icon}`} />
               </button>
             </Fragment>
-          )}
+          ))}
         </div>
-        {activeSettingsPanel === 'Theme' && <ThemeSettings visible={visible} />}
-        {activeSettingsPanel === 'Sounds' && <SoundSettings visible={visible} />}
-        <div className='modal-dialog__footer'>
-          <hr style={{ margin: '1rem 0 .5rem 0' }} />
-          <button className='float-right' onClick={toggleVisible}>
+        {activeSettingsPanel === "Theme" && <ThemeSettings visible={visible} />}
+        {activeSettingsPanel === "Sounds" && (
+          <SoundSettings visible={visible} />
+        )}
+        <div className="modal-dialog__footer">
+          <hr style={{ margin: "1rem 0 .5rem 0" }} />
+          <button className="float-right" onClick={toggleVisible}>
             Close
           </button>
         </div>
       </div>
     </>
-  )
+  );
 }
 
-function SoundSettings ({ visible }) {
-  const [preferences, setPreferences] = useState()
-  const [voices, setVoices] = useState()
+function SoundSettings({ visible }) {
+  const [preferences, setPreferences] = useState();
+  const [voices, setVoices] = useState();
 
   useEffect(async () => {
-    setPreferences(await sendEvent('getPreferences'))
-    setVoices(await sendEvent('getVoices'))
-  }, [visible])
+    setPreferences(await sendEvent("getPreferences"));
+    setVoices(await sendEvent("getVoices"));
+  }, [visible]);
 
   // Listen for changes to preferences triggered by other terminals
-  useEffect(() => eventListener('syncMessage', async (event) => {
-    if (event.name === 'preferences') {
-      setPreferences(await sendEvent('getPreferences'))
-    }
-  }), [])
+  useEffect(
+    () =>
+      eventListener("syncMessage", async (event) => {
+        if (event.name === "preferences") {
+          setPreferences(await sendEvent("getPreferences"));
+        }
+      }),
+    [],
+  );
 
   return (
-    <div className='modal-dialog__panel modal-dialog__panel--with-navigation scrollable'>
-      <h3 className='text-primary'>Sounds</h3>
+    <div className="modal-dialog__panel modal-dialog__panel--with-navigation scrollable">
+      <h3 className="text-primary">Sounds</h3>
       <p>
         ICARUS Terminal includes a voice assistant that can give confirmation of
         commands and relay information about your ship and your surroundings.
       </p>
-      <p className='text-danger'>
+      <p className="text-danger">
         This feature is highly experimental and not compatible with all voices.
       </p>
-      <h4 className='text-primary'>Voice assistant</h4>
+      <h4 className="text-primary">Voice assistant</h4>
       <select
-        value={preferences?.voice ?? 'None'}
+        value={preferences?.voice ?? "None"}
         disabled={!voices || !preferences}
-        name='voices'
-        style={{ width: '20rem' }}
+        name="voices"
+        style={{ width: "20rem" }}
         onChange={async (e) => {
-          const voice = e.target.value
-          const newPreferences = JSON.parse(JSON.stringify(preferences))
-          newPreferences.voice = voice === 'None' ? null : voice
-          setPreferences(await sendEvent('setPreferences', newPreferences))
-          if (voice !== 'None') {
-            sendEvent('testVoice', { voice })
+          const voice = e.target.value;
+          const newPreferences = JSON.parse(JSON.stringify(preferences));
+          newPreferences.voice = voice === "None" ? null : voice;
+          setPreferences(await sendEvent("setPreferences", newPreferences));
+          if (voice !== "None") {
+            sendEvent("testVoice", { voice });
           }
         }}
       >
-        {voices && preferences && <>
-          <option value='None'>None</option>
-          <option disabled>─</option>
-          {voices && voices.map(voice => <option key={`voice_${voice}`}>{voice}</option>)}
-        </>}
+        {voices && preferences && (
+          <>
+            <option value="None">None</option>
+            <option disabled>─</option>
+            {voices &&
+              voices.map((voice) => (
+                <option key={`voice_${voice}`}>{voice}</option>
+              ))}
+          </>
+        )}
       </select>
-      <br /><br />
-      <h4 className='text-primary'>About voice assistant</h4>
+      <br />
+      <br />
+      <h4 className="text-primary">About voice assistant</h4>
       <p>
         The current implementation is only intended for debugging / testing.
       </p>
@@ -98,125 +129,236 @@ function SoundSettings ({ visible }) {
         This setting uses your computers native Text To Speech capabilities.
       </p>
       <p>
-        Third party / commercial voices can provide improved voice audio quality.
+        Third party / commercial voices can provide improved voice audio
+        quality.
       </p>
     </div>
-  )
+  );
 }
 
-function ThemeSettings () {
-  const [primaryColor, setPrimaryColor] = useState(getPrimaryColorAsHex())
-  const [primaryColorModifier, setPrimaryColorModifier] = useState(getPrimaryColorModifier())
-  const [secondaryColor, setSecondaryColor] = useState(getSecondaryColorAsHex())
-  const [secondaryColorModifier, setSecondaryColorModifier] = useState(getSecondaryColorModifier())
+function ThemeSettings() {
+  const [primaryColor, setPrimaryColor] = useState(getPrimaryColorAsHex());
+  const [primaryColorModifier, setPrimaryColorModifier] = useState(
+    getPrimaryColorModifier(),
+  );
+  const [secondaryColor, setSecondaryColor] = useState(
+    getSecondaryColorAsHex(),
+  );
+  const [secondaryColorModifier, setSecondaryColorModifier] = useState(
+    getSecondaryColorModifier(),
+  );
+  const [textGlow, setTextGlow] = useState(getTextGlow());
 
   // Update this component if another window updates the theme settings
   const storageEventHandler = (event) => {
-    if (event.key === 'color-settings') {
-      setPrimaryColor(getPrimaryColorAsHex())
-      setPrimaryColorModifier(getPrimaryColorModifier())
-      setSecondaryColor(getSecondaryColorAsHex())
-      setSecondaryColorModifier(getSecondaryColorModifier())
+    if (event.key === "color-settings") {
+      setPrimaryColor(getPrimaryColorAsHex());
+      setPrimaryColorModifier(getPrimaryColorModifier());
+      setSecondaryColor(getSecondaryColorAsHex());
+      setSecondaryColorModifier(getSecondaryColorModifier());
+      setTextGlow(getTextGlow());
     }
-  }
+  };
 
   useEffect(async () => {
-    window.addEventListener('storage', storageEventHandler)
-    return () => window.removeEventListener('storage', storageEventHandler)
-  }, [])
+    window.addEventListener("storage", storageEventHandler);
+    return () => window.removeEventListener("storage", storageEventHandler);
+  }, []);
 
-  useEffect(() => eventListener('syncMessage', async (event) => {
-    if (event.name === 'colorSettings') {
-      setPrimaryColor(getPrimaryColorAsHex())
-      setPrimaryColorModifier(getPrimaryColorModifier())
-      setSecondaryColor(getSecondaryColorAsHex())
-      setSecondaryColorModifier(getSecondaryColorModifier())
-    }
-  }), [])
+  useEffect(
+    () =>
+      eventListener("syncMessage", async (event) => {
+        if (event.name === "colorSettings") {
+          setPrimaryColor(getPrimaryColorAsHex());
+          setPrimaryColorModifier(getPrimaryColorModifier());
+          setSecondaryColor(getSecondaryColorAsHex());
+          setSecondaryColorModifier(getSecondaryColorModifier());
+          setTextGlow(getTextGlow());
+        }
+      }),
+    [],
+  );
 
   return (
-    <div className='modal-dialog__panel modal-dialog__panel--with-navigation scrollable'>
-      <h3 className='text-primary'>Theme</h3>
+    <div className="modal-dialog__panel modal-dialog__panel--with-navigation scrollable">
+      <h3 className="text-primary">Theme</h3>
       <p>
-        You can select a primary and secondary theme color and adjust the contrast for each color using the sliders.
+        You can select a primary and secondary theme color and adjust the
+        contrast for each color using the sliders.
       </p>
-      <table className='table--layout'>
+      <table className="table--layout">
         <tbody>
           <tr>
-            <td style={{ paddingLeft: '.5rem' }}>
-              <button className='button--active text-no-wrap' style={{ pointerEvents: 'none' }}>
-                <i className='icon icarus-terminal-color-picker' /> Text <span className='text-muted'>Muted</span>
+            <td style={{ paddingLeft: ".5rem" }}>
+              <button
+                className="button--active text-no-wrap"
+                style={{ pointerEvents: "none" }}
+              >
+                <i className="icon icarus-terminal-color-picker" /> Text{" "}
+                <span className="text-muted">Muted</span>
               </button>
               <br />
-              <button className='text-no-wrap' style={{ pointerEvents: 'none' }}>
-                <i className='icon icarus-terminal-color-picker' /> Text <span className='text-muted'>Muted</span>
+              <button
+                className="text-no-wrap"
+                style={{ pointerEvents: "none" }}
+              >
+                <i className="icon icarus-terminal-color-picker" /> Text{" "}
+                <span className="text-muted">Muted</span>
               </button>
             </td>
-            <td className='text-center'>
+            <td className="text-center">
               <input
-                id='primaryColorPicker' name='primaryColorPicker' value={primaryColor} type='color'
-                style={{ marginTop: '.5rem', padding: 0, background: 'transparent', border: 'none', height: '4rem', width: '4rem' }}
+                id="primaryColorPicker"
+                name="primaryColorPicker"
+                value={primaryColor}
+                type="color"
+                style={{
+                  marginTop: ".5rem",
+                  padding: 0,
+                  background: "transparent",
+                  border: "none",
+                  height: "4rem",
+                  width: "4rem",
+                }}
                 onChange={(event) => {
-                  setPrimaryColor(event.target.value)
-                  const color = hex2rgb(event.target.value)
-                  document.documentElement.style.setProperty('--color-primary-r', color.r)
-                  document.documentElement.style.setProperty('--color-primary-g', color.g)
-                  document.documentElement.style.setProperty('--color-primary-b', color.b)
-                  saveColorSettings()
+                  setPrimaryColor(event.target.value);
+                  const color = hex2rgb(event.target.value);
+                  document.documentElement.style.setProperty(
+                    "--color-primary-r",
+                    color.r,
+                  );
+                  document.documentElement.style.setProperty(
+                    "--color-primary-g",
+                    color.g,
+                  );
+                  document.documentElement.style.setProperty(
+                    "--color-primary-b",
+                    color.b,
+                  );
+                  saveColorSettings();
                 }}
               />
               <br />
               <input
-                type='range' min='1' max='255' value={primaryColorModifier} style={{ width: '10rem' }}
+                type="range"
+                min="1"
+                max="255"
+                value={primaryColorModifier}
+                style={{ width: "10rem" }}
                 onChange={(event) => {
-                  setPrimaryColorModifier(event.target.value)
-                  document.documentElement.style.setProperty('--color-primary-dark-modifier', event.target.value)
-                  saveColorSettings()
+                  setPrimaryColorModifier(event.target.value);
+                  document.documentElement.style.setProperty(
+                    "--color-primary-dark-modifier",
+                    event.target.value,
+                  );
+                  saveColorSettings();
                 }}
               />
             </td>
           </tr>
         </tbody>
       </table>
-      <table className='table--layout'>
+      <table className="table--layout">
         <tbody>
           <tr>
-            <td style={{ paddingLeft: '.5rem' }}>
-              <button className='button--secondary button--active text-no-wrap' style={{ pointerEvents: 'none' }}>
-                <i className='icon icarus-terminal-color-picker' /> Text <span className='text-muted'>Muted</span>
+            <td style={{ paddingLeft: ".5rem" }}>
+              <button
+                className="button--secondary button--active text-no-wrap"
+                style={{ pointerEvents: "none" }}
+              >
+                <i className="icon icarus-terminal-color-picker" /> Text{" "}
+                <span className="text-muted">Muted</span>
               </button>
               <br />
-              <button className='button--secondary text-no-wrap' style={{ pointerEvents: 'none' }}>
-                <i className='icon icarus-terminal-color-picker' /> Text <span className='text-muted'>Muted</span>
+              <button
+                className="button--secondary text-no-wrap"
+                style={{ pointerEvents: "none" }}
+              >
+                <i className="icon icarus-terminal-color-picker" /> Text{" "}
+                <span className="text-muted">Muted</span>
               </button>
             </td>
-            <td className='text-center'>
+            <td className="text-center">
               <input
-                id='secondaryColorPicker' name='secondaryColorPicker' value={secondaryColor} type='color'
-                style={{ marginTop: '.5rem', padding: 0, background: 'transparent', border: 'none', height: '4rem', width: '4rem' }}
+                id="secondaryColorPicker"
+                name="secondaryColorPicker"
+                value={secondaryColor}
+                type="color"
+                style={{
+                  marginTop: ".5rem",
+                  padding: 0,
+                  background: "transparent",
+                  border: "none",
+                  height: "4rem",
+                  width: "4rem",
+                }}
                 onChange={(event) => {
-                  setSecondaryColor(event.target.value)
-                  const color = hex2rgb(event.target.value)
-                  document.documentElement.style.setProperty('--color-secondary-r', color.r)
-                  document.documentElement.style.setProperty('--color-secondary-g', color.g)
-                  document.documentElement.style.setProperty('--color-secondary-b', color.b)
-                  saveColorSettings()
+                  setSecondaryColor(event.target.value);
+                  const color = hex2rgb(event.target.value);
+                  document.documentElement.style.setProperty(
+                    "--color-secondary-r",
+                    color.r,
+                  );
+                  document.documentElement.style.setProperty(
+                    "--color-secondary-g",
+                    color.g,
+                  );
+                  document.documentElement.style.setProperty(
+                    "--color-secondary-b",
+                    color.b,
+                  );
+                  saveColorSettings();
                 }}
               />
               <br />
               <input
-                type='range' min='1' max='255' value={secondaryColorModifier} style={{ width: '10rem' }}
+                type="range"
+                min="1"
+                max="255"
+                value={secondaryColorModifier}
+                style={{ width: "10rem" }}
                 onChange={(event) => {
-                  setSecondaryColorModifier(event.target.value)
-                  document.documentElement.style.setProperty('--color-secondary-dark-modifier', event.target.value)
-                  saveColorSettings()
+                  setSecondaryColorModifier(event.target.value);
+                  document.documentElement.style.setProperty(
+                    "--color-secondary-dark-modifier",
+                    event.target.value,
+                  );
+                  saveColorSettings();
                 }}
               />
             </td>
           </tr>
         </tbody>
       </table>
-      <h4 className='text-primary'>Sync theme across devices</h4>
+      <h4 className="text-primary">Text glow</h4>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <p style={{ flex: 1, margin: 0 }}>
+          Turn off glow effect around text elements.
+        </p>
+        <label
+          className="checkbox"
+          style={{ flex: "none", width: "5rem", height: "2rem" }}
+        >
+          <input
+            type="checkbox"
+            checked={textGlow}
+            onChange={(event) => {
+              setTextGlow(event.target.checked);
+              document.documentElement.dataset.textGlow = event.target.checked;
+              saveColorSettings();
+            }}
+          />
+          <span className="checkbox__control" />
+        </label>
+      </div>
+      <h4 className="text-primary">Sync theme across devices</h4>
       <p>
         Theme settings apply to all terminals on this computer / device.
         Different devices can be configured to use different colors.
@@ -225,48 +367,83 @@ function ThemeSettings () {
         You can sync theme settings to have all currently connected devices
         (computers, tablets, phones, etc) use the same theme settings.
       </p>
-      <div className='text-center' style={{ padding: '0.25rem 0' }}>
+      <div className="text-center" style={{ padding: "0.25rem 0" }}>
         <button
           onClick={() => {
             const colorSettings = {
               primaryColor: {
-                r: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-r')),
-                g: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-g')),
-                b: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-b')),
-                modifier: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-dark-modifier'))
+                r: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-primary-r"),
+                ),
+                g: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-primary-g"),
+                ),
+                b: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-primary-b"),
+                ),
+                modifier: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-primary-dark-modifier"),
+                ),
               },
               secondaryColor: {
-                r: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-r')),
-                g: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-g')),
-                b: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-b')),
-                modifier: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-dark-modifier'))
-              }
-            }
-            sendEvent('syncMessage', { name: 'colorSettings', message: colorSettings })
-            document.activeElement.blur()
+                r: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-secondary-r"),
+                ),
+                g: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-secondary-g"),
+                ),
+                b: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-secondary-b"),
+                ),
+                modifier: parseInt(
+                  window
+                    .getComputedStyle(document.documentElement)
+                    .getPropertyValue("--color-secondary-dark-modifier"),
+                ),
+              },
+              textGlow: getTextGlow(),
+            };
+            sendEvent("syncMessage", {
+              name: "colorSettings",
+              message: colorSettings,
+            });
+            document.activeElement.blur();
           }}
         >
-          <i className='icon icarus-terminal-sync' /> Sync theme settings
+          <i className="icon icarus-terminal-sync" /> Sync theme settings
         </button>
       </div>
-      <h4 className='text-primary'>Reset theme</h4>
-      <p>
-        Resetting theme settings will only impact this computer / device.
-      </p>
-      <div className='text-center' style={{ padding: '0.25rem 0' }}>
+      <h4 className="text-primary">Reset theme</h4>
+      <p>Resetting theme settings will only impact this computer / device.</p>
+      <div className="text-center" style={{ padding: "0.25rem 0" }}>
         <button
-          className='text-info'
+          className="text-info"
           onClick={() => {
             try {
-              loadDefaultColorSettings()
-              setPrimaryColor(getPrimaryColorAsHex())
-              setPrimaryColorModifier(getPrimaryColorModifier())
-              setSecondaryColor(getSecondaryColorAsHex())
-              setSecondaryColorModifier(getSecondaryColorModifier())
-              window.localStorage.removeItem('color-settings')
-              document.activeElement.blur()
+              loadDefaultColorSettings();
+              setPrimaryColor(getPrimaryColorAsHex());
+              setPrimaryColorModifier(getPrimaryColorModifier());
+              setSecondaryColor(getSecondaryColorAsHex());
+              setSecondaryColorModifier(getSecondaryColorModifier());
+              setTextGlow(getTextGlow());
+              window.localStorage.removeItem("color-settings");
+              document.activeElement.blur();
             } catch (err) {
-              console.error('Unable to reset color settings', err)
+              console.error("Unable to reset color settings", err);
             }
           }}
         >
@@ -274,139 +451,274 @@ function ThemeSettings () {
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 const hex2rgb = (hex) => {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return { r, g, b }
-}
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+};
 
 const rgb2hex = (r, g, b) => {
-  const rgb = (r << 16) | (g << 8) | b
-  return '#' + rgb.toString(16).padStart(6, 0)
-}
+  const rgb = (r << 16) | (g << 8) | b;
+  return "#" + rgb.toString(16).padStart(6, 0);
+};
 
 const getPrimaryColorAsHex = () => {
-  if (typeof document === 'undefined') return null
-  const r = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-r')
-  const g = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-g')
-  const b = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-b')
-  return rgb2hex(r, g, b)
-}
+  if (typeof document === "undefined") return null;
+  const r = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-primary-r");
+  const g = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-primary-g");
+  const b = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-primary-b");
+  return rgb2hex(r, g, b);
+};
 
 const getSecondaryColorAsHex = () => {
-  if (typeof document === 'undefined') return null
-  const r = window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-r')
-  const g = window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-g')
-  const b = window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-b')
-  return rgb2hex(r, g, b)
-}
+  if (typeof document === "undefined") return null;
+  const r = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-secondary-r");
+  const g = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-secondary-g");
+  const b = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-secondary-b");
+  return rgb2hex(r, g, b);
+};
 
 const getPrimaryColorModifier = () => {
-  if (typeof document === 'undefined') return null
-  return parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-dark-modifier'))
-}
+  if (typeof document === "undefined") return null;
+  return parseInt(
+    window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-primary-dark-modifier"),
+  );
+};
 
 const getSecondaryColorModifier = () => {
-  if (typeof document === 'undefined') return null
-  return parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-dark-modifier'))
-}
+  if (typeof document === "undefined") return null;
+  return parseInt(
+    window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-secondary-dark-modifier"),
+  );
+};
+
+const getTextGlow = () => {
+  if (typeof document === "undefined") return true;
+  return document.documentElement.dataset.textGlow !== "false";
+};
 
 const saveColorSettings = () => {
   const colorSettings = {
     version: packageJson.version,
     primaryColor: {
-      r: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-r')),
-      g: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-g')),
-      b: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-b')),
-      modifier: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary-dark-modifier'))
+      r: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-primary-r"),
+      ),
+      g: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-primary-g"),
+      ),
+      b: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-primary-b"),
+      ),
+      modifier: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-primary-dark-modifier"),
+      ),
     },
     secondaryColor: {
-      r: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-r')),
-      g: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-g')),
-      b: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-b')),
-      modifier: parseInt(window.getComputedStyle(document.documentElement).getPropertyValue('--color-secondary-dark-modifier'))
-    }
-  }
+      r: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-secondary-r"),
+      ),
+      g: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-secondary-g"),
+      ),
+      b: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-secondary-b"),
+      ),
+      modifier: parseInt(
+        window
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--color-secondary-dark-modifier"),
+      ),
+    },
+    textGlow: getTextGlow(),
+  };
   try {
-    window.localStorage.setItem('color-settings', JSON.stringify({ ...colorSettings, timestamp: Date.now() }))
+    window.localStorage.setItem(
+      "color-settings",
+      JSON.stringify({ ...colorSettings, timestamp: Date.now() }),
+    );
   } catch (err) {
-    console.error('Unable to save color settings to localStorage', err)
+    console.error("Unable to save color settings to localStorage", err);
   }
-}
+};
 
 const loadColorSettings = () => {
   try {
-    const colorSettings = JSON.parse(window.localStorage.getItem('color-settings'))
-    if (!colorSettings) return loadDefaultColorSettings() // If no save settings, load defaults
+    const colorSettings = JSON.parse(
+      window.localStorage.getItem("color-settings"),
+    );
+    if (!colorSettings) return loadDefaultColorSettings(); // If no save settings, load defaults
     // If older than v0.3.6 then erase color settings and load defaults as
     // breaking theme changes in v0.3.6
-    if (!colorSettings.version || compareVersions('0.3.6', colorSettings.version) === 1) {
-      window.localStorage.removeItem('color-settings')
-      return loadDefaultColorSettings()
+    if (
+      !colorSettings.version ||
+      compareVersions("0.3.6", colorSettings.version) === 1
+    ) {
+      window.localStorage.removeItem("color-settings");
+      return loadDefaultColorSettings();
     }
 
-    document.documentElement.style.setProperty('--color-primary-r', colorSettings.primaryColor.r)
-    document.documentElement.style.setProperty('--color-primary-g', colorSettings.primaryColor.g)
-    document.documentElement.style.setProperty('--color-primary-b', colorSettings.primaryColor.b)
-    document.documentElement.style.setProperty('--color-primary-dark-modifier', colorSettings.primaryColor.modifier)
-    document.documentElement.style.setProperty('--color-secondary-r', colorSettings.secondaryColor.r)
-    document.documentElement.style.setProperty('--color-secondary-g', colorSettings.secondaryColor.g)
-    document.documentElement.style.setProperty('--color-secondary-b', colorSettings.secondaryColor.b)
-    document.documentElement.style.setProperty('--color-secondary-dark-modifier', colorSettings.secondaryColor.modifier)
+    document.documentElement.style.setProperty(
+      "--color-primary-r",
+      colorSettings.primaryColor.r,
+    );
+    document.documentElement.style.setProperty(
+      "--color-primary-g",
+      colorSettings.primaryColor.g,
+    );
+    document.documentElement.style.setProperty(
+      "--color-primary-b",
+      colorSettings.primaryColor.b,
+    );
+    document.documentElement.style.setProperty(
+      "--color-primary-dark-modifier",
+      colorSettings.primaryColor.modifier,
+    );
+    document.documentElement.style.setProperty(
+      "--color-secondary-r",
+      colorSettings.secondaryColor.r,
+    );
+    document.documentElement.style.setProperty(
+      "--color-secondary-g",
+      colorSettings.secondaryColor.g,
+    );
+    document.documentElement.style.setProperty(
+      "--color-secondary-b",
+      colorSettings.secondaryColor.b,
+    );
+    document.documentElement.style.setProperty(
+      "--color-secondary-dark-modifier",
+      colorSettings.secondaryColor.modifier,
+    );
+
+    // Settings saved before text glow could be turned off don't have this value
+    document.documentElement.dataset.textGlow = colorSettings.textGlow ?? true;
   } catch (err) {
-    console.error('Unable to read color settings from localStorage', err)
-    return loadDefaultColorSettings()
+    console.error("Unable to read color settings from localStorage", err);
+    return loadDefaultColorSettings();
   }
-}
+};
 
 const loadDefaultColorSettings = () => {
   const defaultPrimaryColor = {
-    r: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-primary-r'),
-    g: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-primary-g'),
-    b: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-primary-b')
-  }
+    r: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-primary-r"),
+    g: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-primary-g"),
+    b: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-primary-b"),
+  };
 
-  document.documentElement.style.setProperty('--color-primary-r', defaultPrimaryColor.r)
-  document.documentElement.style.setProperty('--color-primary-g', defaultPrimaryColor.g)
-  document.documentElement.style.setProperty('--color-primary-b', defaultPrimaryColor.b)
+  document.documentElement.style.setProperty(
+    "--color-primary-r",
+    defaultPrimaryColor.r,
+  );
+  document.documentElement.style.setProperty(
+    "--color-primary-g",
+    defaultPrimaryColor.g,
+  );
+  document.documentElement.style.setProperty(
+    "--color-primary-b",
+    defaultPrimaryColor.b,
+  );
 
-  const defaultPrimaryColorModifier = window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-primary-dark-modifier')
-  document.documentElement.style.setProperty('--color-primary-dark-modifier', defaultPrimaryColorModifier)
+  const defaultPrimaryColorModifier = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-default-primary-dark-modifier");
+  document.documentElement.style.setProperty(
+    "--color-primary-dark-modifier",
+    defaultPrimaryColorModifier,
+  );
 
   const defaultSecondaryColor = {
-    r: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-secondary-r'),
-    g: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-secondary-g'),
-    b: window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-secondary-b')
-  }
+    r: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-secondary-r"),
+    g: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-secondary-g"),
+    b: window
+      .getComputedStyle(document.documentElement)
+      .getPropertyValue("--color-default-secondary-b"),
+  };
 
-  document.documentElement.style.setProperty('--color-secondary-r', defaultSecondaryColor.r)
-  document.documentElement.style.setProperty('--color-secondary-g', defaultSecondaryColor.g)
-  document.documentElement.style.setProperty('--color-secondary-b', defaultSecondaryColor.b)
+  document.documentElement.style.setProperty(
+    "--color-secondary-r",
+    defaultSecondaryColor.r,
+  );
+  document.documentElement.style.setProperty(
+    "--color-secondary-g",
+    defaultSecondaryColor.g,
+  );
+  document.documentElement.style.setProperty(
+    "--color-secondary-b",
+    defaultSecondaryColor.b,
+  );
 
-  const defaultSecondaryColorModifier = window.getComputedStyle(document.documentElement).getPropertyValue('--color-default-secondary-dark-modifier')
-  document.documentElement.style.setProperty('--color-secondary-dark-modifier', defaultSecondaryColorModifier)
-}
+  const defaultSecondaryColorModifier = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue("--color-default-secondary-dark-modifier");
+  document.documentElement.style.setProperty(
+    "--color-secondary-dark-modifier",
+    defaultSecondaryColorModifier,
+  );
+
+  document.documentElement.dataset.textGlow = true;
+};
 
 // Returns: 1 = v1 is bigger, 0 = same version, -1 = v1 is smaller
-function compareVersions (v1, v2) {
-  const v1Parts = v1.split('.')
-  const v2Parts = v2.split('.')
-  const length = Math.max(v1Parts.length, v2Parts.length)
+function compareVersions(v1, v2) {
+  const v1Parts = v1.split(".");
+  const v2Parts = v2.split(".");
+  const length = Math.max(v1Parts.length, v2Parts.length);
   for (let i = 0; i < length; i++) {
-    const value = (parseInt(v1Parts[i]) || 0) - (parseInt(v2Parts[i]) || 0)
-    if (value < 0) return -1
-    if (value > 0) return 1
+    const value = (parseInt(v1Parts[i]) || 0) - (parseInt(v2Parts[i]) || 0);
+    if (value < 0) return -1;
+    if (value > 0) return 1;
   }
-  return 0
+  return 0;
 }
 
 module.exports = {
   Settings,
   loadColorSettings,
   loadDefaultColorSettings,
-  saveColorSettings
-}
+  saveColorSettings,
+};
