@@ -90,3 +90,18 @@
   --breakpoint-large: 1024px; /* Where Large starts. */
   --breakpoint-huge: 1280px; /* Where Huge starts. */
 }
+
+/* Text glow can be turned off in Settings > Theme */
+html[data-text-glow="false"] {
+  --text-shadow: none;
+}
+
+/*
+  Buttons (e.g. the main navigation) and icons define their own glow for active
+  and hover states, so they have to be turned off explicitly.
+*/
+html[data-text-glow="false"] button,
+html[data-text-glow="false"] .button,
+html[data-text-glow="false"] .icon {
+  text-shadow: none !important;
+}

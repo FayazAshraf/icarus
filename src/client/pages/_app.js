@@ -117,6 +117,7 @@ export default class MyApp extends App {
           document.documentElement.style.setProperty('--color-secondary-g', colorSettings.secondaryColor.g)
           document.documentElement.style.setProperty('--color-secondary-b', colorSettings.secondaryColor.b)
           document.documentElement.style.setProperty('--color-secondary-dark-modifier', colorSettings.secondaryColor.modifier)
+          document.documentElement.dataset.textGlow = colorSettings.textGlow ?? true
           saveColorSettings()
         }
       })
