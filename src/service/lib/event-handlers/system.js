@@ -93,15 +93,18 @@ class System {
       // Get system from EDSM
       const system = await EDSM.system(systemName)
 
-      // TODO Look up recent local data we have in the logs for bodies in the
-      // system and merge data with about bodies and stations from EDSM,
-      // overwriting data from EDSM with with more recent local where there are
-      // conflicts.
-
       // EDSM has no bodies for systems nobody has explored and uploaded yet, so
       // add in any bodies the player has scanned themselves. EDSM is left as
       // the source of truth for bodies it does know about.
       // See: https://github.com/iaincollins/icarus/issues/85
+      //
+      // TODO This merges whole bodies, not the values on them, so a body EDSM
+      // already knows about keeps EDSM's data even where the local logs are
+      // more recent (e.g. EDSM only has Full Spectrum Scan data for a body the
+      // player has since surface scanned). Merging at the field level needs a
+      // list of which values the logs own; the identity of a body (id, id64,
+      // bodyId) has to stay EDSM's, as bodies built from the logs only have a
+      // synthetic id64. Stations are not merged from local data at all yet.
       const bodiesFromJournal = await getBodiesFromJournal(this.eliteLog, systemName)
       if (bodiesFromJournal.length > 0) {
         if (!system.bodies) system.bodies = []
