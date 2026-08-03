@@ -1,5 +1,6 @@
 const EDSM = require('../edsm')
 const SystemMap = require('../system-map')
+const { getBodiesFromJournal } = require('../journal-bodies')
 const { UNKNOWN_VALUE } = require('../../../shared/consts')
 const distance = require('../../../shared/distance')
 
@@ -92,10 +93,39 @@ class System {
       // Get system from EDSM
       const system = await EDSM.system(systemName)
 
-      // TODO Look up recent local data we have in the logs for bodies in the
-      // system and merge data with about bodies and stations from EDSM,
-      // overwriting data from EDSM with with more recent local where there are
-      // conflicts.
+      // EDSM has no bodies for systems nobody has explored and uploaded yet, so
+      // add in any bodies the player has scanned themselves. EDSM is left as
+      // the source of truth for bodies it does know about.
+      // See: https://github.com/iaincollins/icarus/issues/85
+      //
+      // TODO This merges whole bodies, not the values on them, so a body EDSM
+      // already knows about keeps EDSM's data even where the local logs are
+      // more recent (e.g. EDSM only has Full Spectrum Scan data for a body the
+      // player has since surface scanned). Merging at the field level needs a
+      // list of which values the logs own; the identity of a body (id, id64,
+      // bodyId) has to stay EDSM's, as bodies built from the logs only have a
+      // synthetic id64. Stations are not merged from local data at all yet.
+      const bodiesFromJournal = await getBodiesFromJournal(this.eliteLog, systemName)
+      if (bodiesFromJournal.length > 0) {
+        if (!system.bodies) system.bodies = []
+        // EDSM returns a null body id for the main star in some systems (the
+        // same quirk SystemMap patches around) so treat that as body id 0,
+        // otherwise we add the star a second time from the journal
+        const bodyIdsFromEDSM = system.bodies.map(body => (body.type === 'Star' && body.bodyId === null) ? 0 : body.bodyId)
+        system.bodies = system.bodies
+          .concat(bodiesFromJournal.filter(body => !bodyIdsFromEDSM.includes(body.bodyId)))
+          .sort((a, b) => a.bodyId - b.bodyId)
+
+        // If EDSM doesn't know the system at all we can still name and place it
+        // using the player's own logs
+        if (system.name === UNKNOWN_VALUE) system.name = systemName
+        if (system.address === UNKNOWN_VALUE && currentLocation?.address && systemName.toLowerCase() === currentLocation?.name?.toLowerCase()) {
+          system.address = currentLocation.address
+        }
+        if (!system.position && currentLocation?.position && systemName.toLowerCase() === currentLocation?.name?.toLowerCase()) {
+          system.position = currentLocation.position
+        }
+      }
 
       // Merge in local scan data with information about the body
       if (system?.bodies) {
