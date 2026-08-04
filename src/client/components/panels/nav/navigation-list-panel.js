@@ -1,8 +1,12 @@
 import CopyOnClick from 'components/copy-on-click'
 import { SPACE_STATIONS, SURFACE_PORTS, PLANETARY_BASES, MEGASHIPS } from '../../../../shared/consts'
 
-export default function NavigationListPanel ({ system, systemObject, setSystemObject, showHelp }) {
+export default function NavigationListPanel ({ system, systemObject, setSystemObject, cmdrStatus, showHelp }) {
   if (!system) return null
+
+  // Where the commander is, as shown on the system map. Can be a body, or a
+  // body and the station or settlement on it, so match against all of them
+  const currentLocationNames = (cmdrStatus?._location ?? []).map(name => name.toLowerCase())
 
   // Check if any bodies are visible on map (i.e. any stars *or* any "additional objects")
   const visibleBodiesOnMap = (!system.stars || (system.stars.length === 1 && (system.stars?.[0]?._children?.length) === 0))
@@ -35,7 +39,7 @@ export default function NavigationListPanel ({ system, systemObject, setSystemOb
             </tr>
           </thead>
           <tbody className='fx-fade-in'>
-            <NavigationTableBody system={system} setSystemObject={setSystemObject} />
+            <NavigationTableBody system={system} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} />
             {/* {system.stars.map(star => <NavigationTableRow key={`${star.name}_${star.bodyId}`} systemObject={star}/>
             // <>
             // {NavigationTableRow(star)}
@@ -61,43 +65,43 @@ export default function NavigationListPanel ({ system, systemObject, setSystemOb
   )
 }
 
-function NavigationTableBody ({ system, setSystemObject }) {
+function NavigationTableBody ({ system, setSystemObject, currentLocationNames }) {
   let tableRows = []
 
   if (!system?.stars) return tableRows // Handle unknown systems
 
   for (const star of system.stars) {
-    tableRows.push(<NavigationTableRow key={`${star.name}_${star.id}`} stars={system.stars} systemObject={star} setSystemObject={setSystemObject} />)
+    tableRows.push(<NavigationTableRow key={`${star.name}_${star.id}`} stars={system.stars} systemObject={star} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} />)
 
     for (const systemObject of star._children) {
-      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${systemObject.name}_${systemObject.id}`} stars={system.stars} systemObject={systemObject} setSystemObject={setSystemObject} />)
+      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${systemObject.name}_${systemObject.id}`} stars={system.stars} systemObject={systemObject} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} />)
     }
   }
 
   return tableRows
 }
 
-function NavigationTableRowChildren ({ stars, systemObject, setSystemObject, depth = 1 }) {
+function NavigationTableRowChildren ({ stars, systemObject, setSystemObject, currentLocationNames, depth = 1 }) {
   let tableRows = []
 
-  tableRows.push(<NavigationTableRow key={`${systemObject.name}_${systemObject.id}`} stars={stars} systemObject={systemObject} depth={depth} setSystemObject={setSystemObject} />)
+  tableRows.push(<NavigationTableRow key={`${systemObject.name}_${systemObject.id}`} stars={stars} systemObject={systemObject} depth={depth} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} />)
 
   // Includes Planets, Starports and Megaships in orbit
   if (systemObject._children) {
     for (const childSystemObject of systemObject._children) {
-      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${childSystemObject.name}_${childSystemObject.id}`} stars={stars} systemObject={childSystemObject} setSystemObject={setSystemObject} depth={depth + 1} />)
+      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${childSystemObject.name}_${childSystemObject.id}`} stars={stars} systemObject={childSystemObject} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} depth={depth + 1} />)
     }
   }
 
   if (systemObject._planetaryBases) {
     for (const planetaryBase of systemObject._planetaryBases) {
-      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${planetaryBase.name}_${planetaryBase.id}`} stars={stars} systemObject={planetaryBase} setSystemObject={setSystemObject} depth={depth + 1} />)
+      tableRows = tableRows.concat(<NavigationTableRowChildren key={`${planetaryBase.name}_${planetaryBase.id}`} stars={stars} systemObject={planetaryBase} setSystemObject={setSystemObject} currentLocationNames={currentLocationNames} depth={depth + 1} />)
     }
   }
   return tableRows
 }
 
-function NavigationTableRow ({ stars, systemObject, depth = 0, setSystemObject }) {
+function NavigationTableRow ({ stars, systemObject, depth = 0, setSystemObject, currentLocationNames }) {
   if (!systemObject.type) {
     console.warn('Unknown type of system object', systemObject)
     return null
@@ -176,6 +180,12 @@ function NavigationTableRow ({ stars, systemObject, depth = 0, setSystemObject }
                 <span className='hidden-medium'>{systemObject.name}</span>
               </>
             : systemObject.name}
+          {currentLocationNames?.includes(systemObject.name?.toLowerCase()) &&
+            <i
+              className='icon icarus-terminal-location-filled text-secondary'
+              title='Current location'
+              style={{ fontSize: '1.5rem', marginLeft: '.5rem', position: 'relative', top: '.2rem' }}
+            />}
           <span className={systemObject.isLandable ? 'text-secondary' : ''}>
             {(systemObject.atmosphereComposition && !systemObject?.subType?.toLowerCase()?.includes('gas giant')) && <i className='float-right icon icarus-terminal-planet-atmosphere' />}
             {systemObject.volcanismType && systemObject.volcanismType !== 'No volcanism' && <i className='float-right icon icarus-terminal-planet-volcanic' />}

@@ -15,22 +15,34 @@ function formatBytes (bytes) {
   return bytes
 }
 
-function eliteDateTime (timestamp = Date.now()) {
+const twoDigits = (number) => String(number).padStart(2, '0')
+
+// Time in the Elite universe is always in UTC, but the terminal can be set to
+// show local time instead (Settings > Theme)
+function showingLocalTime () {
+  if (typeof document === 'undefined') return false
+  return document.documentElement.dataset.localTime === 'true'
+}
+
+function eliteDateTime (timestamp = Date.now(), localTime = showingLocalTime()) {
   const date = new Date(timestamp)
   date.setFullYear(date.getFullYear() + 1286) // We are living in the future
-  const dateTimeString = date.toUTCString()
-    .replace(' GMT', '') // Time in the Elite universe is always in UTC
-    .replace(/(.*), /, '') // Strip day of week
-    .replace(/:[0-9]{2}$/, '') // Strip seconds
-    .replace(/^0/, '') // Strip leading zeros from day of month
+
+  const dateTimeString = localTime
+    ? `${date.getDate()} ${date.toLocaleString('en-us', { month: 'short' })} ${date.getFullYear()} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`
+    : date.toUTCString()
+      .replace(' GMT', '')
+      .replace(/(.*), /, '') // Strip day of week
+      .replace(/:[0-9]{2}$/, '') // Strip seconds
+      .replace(/^0/, '') // Strip leading zeros from day of month
 
   const dateTimeObject = {
     dateTime: dateTimeString,
     date: dateTimeString.split(/^(.*)? (\d\d:\d\d)/)[1],
     time: dateTimeString.split(/^(.*)? (\d\d:\d\d)/)[2],
-    day: date.getDate(),
-    month: date.toLocaleString('en-us',{month:'short'}),
-    year: date.getFullYear()
+    day: localTime ? date.getDate() : date.getUTCDate(),
+    month: date.toLocaleString('en-us', { month: 'short', ...(localTime ? {} : { timeZone: 'UTC' }) }),
+    year: localTime ? date.getFullYear() : date.getUTCFullYear()
   }
 
   return dateTimeObject

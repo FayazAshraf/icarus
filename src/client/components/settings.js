@@ -37,7 +37,10 @@ function Settings({
               <button
                 tabIndex="2"
                 className={`button--icon ${item.active ? "button--active" : ""}`}
-                onClick={() => setActiveSettingsPanel(item.name)}
+                onClick={() => {
+                  if (item.action === "reload") return window.location.reload();
+                  setActiveSettingsPanel(item.name);
+                }}
               >
                 <i className={`icon icarus-terminal-${item.icon}`} />
               </button>
@@ -148,6 +151,7 @@ function ThemeSettings() {
     getSecondaryColorModifier(),
   );
   const [textGlow, setTextGlow] = useState(getTextGlow());
+  const [localTime, setLocalTime] = useState(getLocalTime());
 
   // Update this component if another window updates the theme settings
   const storageEventHandler = (event) => {
@@ -157,6 +161,7 @@ function ThemeSettings() {
       setSecondaryColor(getSecondaryColorAsHex());
       setSecondaryColorModifier(getSecondaryColorModifier());
       setTextGlow(getTextGlow());
+      setLocalTime(getLocalTime());
     }
   };
 
@@ -174,6 +179,7 @@ function ThemeSettings() {
           setSecondaryColor(getSecondaryColorAsHex());
           setSecondaryColorModifier(getSecondaryColorModifier());
           setTextGlow(getTextGlow());
+          setLocalTime(getLocalTime());
         }
       }),
     [],
@@ -358,6 +364,35 @@ function ThemeSettings() {
           <span className="checkbox__control" />
         </label>
       </div>
+      <h4 className="text-primary">Local time</h4>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <p style={{ flex: 1, margin: 0 }}>
+          Show times in local time instead of the ship clock, which always uses
+          GMT.
+        </p>
+        <label
+          className="checkbox"
+          style={{ flex: "none", width: "5rem", height: "2rem" }}
+        >
+          <input
+            type="checkbox"
+            checked={localTime}
+            onChange={(event) => {
+              setLocalTime(event.target.checked);
+              document.documentElement.dataset.localTime = event.target.checked;
+              saveColorSettings();
+            }}
+          />
+          <span className="checkbox__control" />
+        </label>
+      </div>
       <h4 className="text-primary">Sync theme across devices</h4>
       <p>
         Theme settings apply to all terminals on this computer / device.
@@ -416,6 +451,7 @@ function ThemeSettings() {
                 ),
               },
               textGlow: getTextGlow(),
+              localTime: getLocalTime(),
             };
             sendEvent("syncMessage", {
               name: "colorSettings",
@@ -440,6 +476,7 @@ function ThemeSettings() {
               setSecondaryColor(getSecondaryColorAsHex());
               setSecondaryColorModifier(getSecondaryColorModifier());
               setTextGlow(getTextGlow());
+              setLocalTime(getLocalTime());
               window.localStorage.removeItem("color-settings");
               document.activeElement.blur();
             } catch (err) {
@@ -517,6 +554,11 @@ const getTextGlow = () => {
   return document.documentElement.dataset.textGlow !== "false";
 };
 
+const getLocalTime = () => {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.dataset.localTime === "true";
+};
+
 const saveColorSettings = () => {
   const colorSettings = {
     version: packageJson.version,
@@ -565,6 +607,7 @@ const saveColorSettings = () => {
       ),
     },
     textGlow: getTextGlow(),
+    localTime: getLocalTime(),
   };
   try {
     window.localStorage.setItem(
@@ -627,6 +670,7 @@ const loadColorSettings = () => {
 
     // Settings saved before text glow could be turned off don't have this value
     document.documentElement.dataset.textGlow = colorSettings.textGlow ?? true;
+    document.documentElement.dataset.localTime = colorSettings.localTime ?? false;
   } catch (err) {
     console.error("Unable to read color settings from localStorage", err);
     return loadDefaultColorSettings();
@@ -701,6 +745,7 @@ const loadDefaultColorSettings = () => {
   );
 
   document.documentElement.dataset.textGlow = true;
+  document.documentElement.dataset.localTime = false;
 };
 
 // Returns: 1 = v1 is bigger, 0 = same version, -1 = v1 is smaller

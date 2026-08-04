@@ -117,9 +117,20 @@ export default function NavigationInspectorPanel ({ systemObject, setSystemObjec
               </>}
 
               {systemObject.biologicalGenuses && <>
-                {systemObject.biologicalGenuses.map(genus => 
-                  <p key={`navigation-inspector_${systemObject.id}_bio-signal_${genus}`} className='text-info'><i className='icarus-terminal-plant' style={{position: 'relative', top: '.2rem', fontSize: '1.5rem'}}/> {genus}</p>
-                )}
+                {systemObject.biologicalGenuses.map(genus => {
+                  // How far along we are collecting samples from this genus, if
+                  // we have started collecting them
+                  const samples = systemObject?.biologicalSamples?.[genus]
+                  return (
+                    <p key={`navigation-inspector_${systemObject.id}_bio-signal_${genus}`} className='text-info'>
+                      <i className='icarus-terminal-plant' style={{position: 'relative', top: '.2rem', fontSize: '1.5rem'}}/> {genus}
+                      {samples?.complete === true &&
+                        <span title={samples.species ? `${samples.species} - all samples collected` : 'All samples collected'}> ✓</span>}
+                      {samples && samples.complete !== true &&
+                        <span className='text-muted' title={samples.species ?? undefined}> ({samples.samples}/3)</span>}
+                    </p>
+                  )
+                })}
               </>}
 
               {/* {systemObject?.discovery?.commander && <p className='text-info'><span className='text-primary'>EDSM Credit</span><br/>Cmdr {systemObject.discovery.commander}</p>} */}

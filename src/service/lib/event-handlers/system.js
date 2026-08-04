@@ -4,6 +4,8 @@ const { getBodiesFromJournal } = require('../journal-bodies')
 const { UNKNOWN_VALUE } = require('../../../shared/consts')
 const distance = require('../../../shared/distance')
 
+const SAMPLES_TO_COMPLETE = 3 // Samples needed to complete a biological species
+
 class System {
   constructor ({ eliteLog }) {
     this.eliteLog = eliteLog
@@ -72,6 +74,64 @@ class System {
     return currentLocation
   }
 
+  // Some events only identify a system by address, so we need to be able to
+  // resolve one from a system name to find them
+  async getSystemAddress (systemName, currentLocation = null) {
+    if (systemName.toLowerCase() === currentLocation?.name?.toLowerCase() && currentLocation?.address) {
+      return currentLocation.address
+    }
+
+    const cachedAddress = global.CACHE.SYSTEMS[systemName.toLowerCase()]?.address
+    if (cachedAddress && cachedAddress !== UNKNOWN_VALUE) return cachedAddress
+
+    const [Scan] = await this.eliteLog._query({ event: 'Scan', StarSystem: systemName }, 1)
+    return Scan?.SystemAddress ?? null
+  }
+
+  // Progress collecting biological samples on a body, keyed by genus. Three
+  // samples complete a species; the logs record the first as a 'Log', the
+  // second and third as a 'Sample' and write an 'Analyse' once the set is
+  // complete. Starting a new set on a species writes another 'Log', which
+  // starts the count again.
+  async getBiologicalSamples (systemAddress, bodyId) {
+    const samplesByGenus = {}
+
+    if (!systemAddress || systemAddress === UNKNOWN_VALUE) return samplesByGenus
+    if (bodyId === undefined || bodyId === null) return samplesByGenus
+
+    const scans = await this.eliteLog._query(
+      { event: 'ScanOrganic', SystemAddress: systemAddress, Body: bodyId },
+      0,
+      { timestamp: 1 } // Oldest first, so samples are counted in the order taken
+    )
+
+    for (const scan of scans) {
+      const genus = scan.Genus_Localised ?? scan.Genus
+      if (!genus) continue
+
+      if (!samplesByGenus[genus]) samplesByGenus[genus] = { samples: 0, complete: false }
+      const progress = samplesByGenus[genus]
+
+      if (scan.Species_Localised) progress.species = scan.Species_Localised
+
+      switch (scan.ScanType) {
+        case 'Log': // First sample of a set
+          progress.samples = 1
+          progress.complete = false
+          break
+        case 'Sample': // Second and third samples
+          progress.samples = Math.min(progress.samples + 1, SAMPLES_TO_COMPLETE)
+          break
+        case 'Analyse': // Written once the third sample is taken
+          progress.samples = SAMPLES_TO_COMPLETE
+          progress.complete = true
+          break
+      }
+    }
+
+    return samplesByGenus
+  }
+
   // Timestamp of the most recent event in the logs that changes what we know
   // about a system. Scans identify the system by name, but the events written
   // while surface scanning it only have a system address, so both are checked.
@@ -80,7 +140,7 @@ class System {
     if (systemAddress && systemAddress !== UNKNOWN_VALUE) systemIdentifiers.push({ SystemAddress: systemAddress })
 
     const [mostRecentEvent] = await this.eliteLog._query({
-      event: { $in: ['Scan', 'FSSDiscoveryScan', 'FSSAllBodiesFound', 'SAAScanComplete', 'FSSBodySignals', 'SAASignalsFound'] },
+      event: { $in: ['Scan', 'FSSDiscoveryScan', 'FSSAllBodiesFound', 'SAAScanComplete', 'FSSBodySignals', 'SAASignalsFound', 'ScanOrganic'] },
       $or: systemIdentifiers
     }, 1)
 
@@ -106,9 +166,7 @@ class System {
     // system in the logs. Without this a system cached before it was scanned
     // is served indefinitely (until the service is restarted) to anything that
     // doesn't explicitly ask to bypass the cache.
-    const systemAddress = (systemName.toLowerCase() === currentLocation?.name?.toLowerCase())
-      ? currentLocation?.address
-      : global.CACHE.SYSTEMS[systemName.toLowerCase()]?.address
+    const systemAddress = await this.getSystemAddress(systemName, currentLocation)
     const localDataTimestamp = await this.getLocalDataTimestamp(systemName, systemAddress)
 
     // Check for entry in cache in case we have it already
@@ -201,6 +259,12 @@ class System {
             ;(SAASignalsFound[0]?.Genuses).map(biologicalSamples => {
               body.biologicalGenuses.push(biologicalSamples.Genus_Localised)
             })
+          }
+
+          // Merge in how far along we are collecting samples from each genus
+          if (body.signals.biological > 0) {
+            const biologicalSamples = await this.getBiologicalSamples(systemAddress, body.bodyId)
+            if (Object.keys(biologicalSamples).length > 0) body.biologicalSamples = biologicalSamples
           }
 
           // Only log discovered / mapped if in an unhabited system

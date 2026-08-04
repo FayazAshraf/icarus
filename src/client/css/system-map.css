@@ -556,7 +556,8 @@ on slow devices (e.g. Amazon Fire) to be the default */
 
 .system-map__planetary-facility-icon,
 .system-map__planetary-port-icon,
-.system-map__planetary-lander-icon {
+.system-map__planetary-lander-icon,
+.system-map__biological-icon {
   pointer-events: none;
   overflow: visible;
   z-index: 5;
@@ -567,9 +568,25 @@ on slow devices (e.g. Amazon Fire) to be the default */
 
  .system-map__system-object:focus .system-map__planetary-facility-icon,
  .system-map__system-object:focus .system-map__planetary-port-icon,
- .system-map__system-object:focus .system-map__planetary-lander-icon {
+ .system-map__system-object:focus .system-map__planetary-lander-icon,
+ .system-map__system-object:focus .system-map__biological-icon {
   filter: drop-shadow(0 0 5rem var(--color-primary)) drop-shadow(0 0 10rem var(--color-primary)) !important;
  }
+
+/*
+  These icons glow using a drop shadow rather than a text shadow, so they need
+  turning off explicitly when the text glow setting is off
+*/
+html[data-text-glow="false"] .system-map__planetary-facility-icon,
+html[data-text-glow="false"] .system-map__planetary-port-icon,
+html[data-text-glow="false"] .system-map__planetary-lander-icon,
+html[data-text-glow="false"] .system-map__biological-icon,
+html[data-text-glow="false"] .system-map__system-object:focus .system-map__planetary-facility-icon,
+html[data-text-glow="false"] .system-map__system-object:focus .system-map__planetary-port-icon,
+html[data-text-glow="false"] .system-map__system-object:focus .system-map__planetary-lander-icon,
+html[data-text-glow="false"] .system-map__system-object:focus .system-map__biological-icon {
+  filter: none !important;
+}
 
  .system-map__system-object .system-map__station {
   stroke: var(--color-secondary);
