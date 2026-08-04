@@ -87,6 +87,8 @@ export default function SystemMapObject ({ systemObject, setSystemObject, parent
       const imageX = x - CORRECT_FOR_IMAGE_OFFSET_X
       const imageY = y - CORRECT_FOR_IMAGE_OFFSET_Y
 
+      const hasBiologicalSignals = systemObject?.signals?.biological > 0
+
       let hasPlanetaryPort = false
       let hasPlanetaryFacilities = false
 
@@ -99,6 +101,11 @@ export default function SystemMapObject ({ systemObject, setSystemObject, parent
           hasPlanetaryPort = true
         }
       })
+
+      // Biological signals are drawn to the left of the surface icon, which
+      // stays where it is so surface icons stay lined up with each other from
+      // one body to the next
+      const biologicalIconOffsetX = 900
 
       return (
         <g
@@ -229,6 +236,14 @@ export default function SystemMapObject ({ systemObject, setSystemObject, parent
                 y={imageY - 100}
               >
                 {Icons['Planet Lander']}
+              </svg>}
+            {hasBiologicalSignals &&
+              <svg
+                className='system-map__biological-icon'
+                x={imageX - biologicalIconOffsetX}
+                y={imageY - 100}
+              >
+                {Icons.Plant}
               </svg>}
           </g>
         </g>
