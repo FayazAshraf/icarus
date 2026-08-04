@@ -113,6 +113,11 @@ function SettingsNavItems (activePanel) {
     {
       name: 'Sounds',
       icon: 'sound'
+    },
+    {
+      name: 'Reload',
+      icon: 'sync',
+      action: 'reload' // Reloads the terminal instead of opening a panel
     }
   ]
   navigationItems.forEach(item => {

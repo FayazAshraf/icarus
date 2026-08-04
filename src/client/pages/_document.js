@@ -13,7 +13,7 @@ class MyDocument extends Document {
 
   render () {
     return (
-      <Html lang='en' data-fx-crt='true' data-fx-crt-text='false' data-fx-crt-text-animated='false' data-text-glow='true'>
+      <Html lang='en' data-fx-crt='true' data-fx-crt-text='false' data-fx-crt-text-animated='false' data-text-glow='true' data-local-time='false'>
         <Head>
           <link rel='manifest' href='/manifest.json' />
           <link rel='apple-touch-icon' izes='180x180' href='/icons/icon-180x180.png' />
