@@ -72,6 +72,21 @@ class System {
     return currentLocation
   }
 
+  // Timestamp of the most recent event in the logs that changes what we know
+  // about a system. Scans identify the system by name, but the events written
+  // while surface scanning it only have a system address, so both are checked.
+  async getLocalDataTimestamp (systemName, systemAddress = null) {
+    const systemIdentifiers = [{ StarSystem: systemName }, { SystemName: systemName }]
+    if (systemAddress && systemAddress !== UNKNOWN_VALUE) systemIdentifiers.push({ SystemAddress: systemAddress })
+
+    const [mostRecentEvent] = await this.eliteLog._query({
+      event: { $in: ['Scan', 'FSSDiscoveryScan', 'FSSAllBodiesFound', 'SAAScanComplete', 'FSSBodySignals', 'SAASignalsFound'] },
+      $or: systemIdentifiers
+    }, 1)
+
+    return mostRecentEvent?.timestamp ?? null
+  }
+
   async getSystem ({ name = null, useCache = true } = {}) {
     const currentLocation = await this.getCurrentLocation()
 
@@ -86,10 +101,22 @@ class System {
       }
     }
 
+    // What we know about a system changes as the player scans it, so a cache
+    // entry is only good for as long as there are no newer events for the
+    // system in the logs. Without this a system cached before it was scanned
+    // is served indefinitely (until the service is restarted) to anything that
+    // doesn't explicitly ask to bypass the cache.
+    const systemAddress = (systemName.toLowerCase() === currentLocation?.name?.toLowerCase())
+      ? currentLocation?.address
+      : global.CACHE.SYSTEMS[systemName.toLowerCase()]?.address
+    const localDataTimestamp = await this.getLocalDataTimestamp(systemName, systemAddress)
+
     // Check for entry in cache in case we have it already
     // Note: System names are unique (they can change, but will still be unique)
     // so is okay to use them as a key.
-    if (!global.CACHE.SYSTEMS[systemName.toLowerCase()] || useCache === false) {
+    if (!global.CACHE.SYSTEMS[systemName.toLowerCase()] ||
+        useCache === false ||
+        global.CACHE.SYSTEMS[systemName.toLowerCase()]._localDataTimestamp !== localDataTimestamp) {
       // Get system from EDSM
       const system = await EDSM.system(systemName)
 
@@ -199,7 +226,8 @@ class System {
       // Create/Update cache entry with merged system and system map data
       global.CACHE.SYSTEMS[systemName.toLowerCase()] = {
         ...system,
-        ...systemMap
+        ...systemMap,
+        _localDataTimestamp: localDataTimestamp
       }
     }
 
