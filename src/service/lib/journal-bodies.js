@@ -186,6 +186,9 @@ function bodyFromScan (Scan) {
   if (!Scan.StarType && !Scan.PlanetClass) return null
 
   const body = {
+    // The UI uses the id to draw a body (a star isn't drawn without one) and to
+    // key elements on the page, so bodies from the logs need one of their own
+    id: bodyId64(Scan),
     id64: bodyId64(Scan),
     bodyId: Scan.BodyID,
     name: Scan.BodyName,
