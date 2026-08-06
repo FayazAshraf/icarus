@@ -150,6 +150,16 @@ export default function SystemMapObject ({ systemObject, setSystemObject, parent
               </text>
             </>}
           <g className='system-map__body'>
+            {/* A star glows using a circle that fades out, as filters on SVG
+                are not rendered the same way in every browser */}
+            {systemObject.type === 'Star' &&
+              <circle
+                className='system-map__star-glow'
+                cx={x}
+                cy={y}
+                r={r * 1.225}
+                mask='url(#svg-mask__star-glow)'
+              />}
             <g className='system-map__planet'>
               <circle
                 id={`navigation-panel__${systemObject.id}`}

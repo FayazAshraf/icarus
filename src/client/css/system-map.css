@@ -374,78 +374,93 @@ on slow devices (e.g. Amazon Fire) to be the default */
   filter: contrast(2) brightness(2) !important;
 }
 
+/*
+  A star is drawn as a flat coloured disc, with a texture over it and a glow
+  behind it. The colour is set on the object itself so the disc and the glow
+  share it, and each class only needs to say what colour it is.
+
+  This replaces tinting a greyscale texture with filters, which relied on
+  filters being applied to SVG - something Safari in particular does not do.
+*/
+.system-map__system-object[data-system-object-type="Star"] {
+  fill: #ffa32b;
+}
+
+/* Bodies are given a fill of their own, which a star takes from its class */
 .system-map__system-object[data-system-object-type="Star"] .system-map__planet {
-  filter: url(#svg-filter__star-glow--light);
+  fill: inherit;
+}
+
+.system-map__system-object[data-system-object-type="Star"] .system-map__planet-surface {
+  fill: url(#svg-pattern__star-surface);
+  opacity: .25;
+  stroke: none;
+}
+
+.system-map__star-glow {
+  pointer-events: none;
 }
 
 .system-map__system-object[data-system-object-type="Star"]:focus .system-map__planet {
   stroke-width: 225 !important;
 }
 
-.system-map__system-object[data-system-object-type="Star"] .system-map__planet-surface {
-  fill: white;
-  filter: grayscale(100%) contrast(0.2) brightness(1.5) drop-shadow(0 0 15rem white);
-  opacity: 1;
-  stroke: none;
+/* Blue-white: O, B, A, T Tauri and Wolf-Rayet */
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="O "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="B "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="A "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TT "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TTS "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="W "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WC "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WN "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WNC "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WO "] {
+  fill: #b9d0ff;
 }
 
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type="Supermassive Black Hole" i] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type="Black Hole" i] .system-map__planet-surface {
-  fill: black !important;
-  filter: drop-shadow(0 0 15rem white) !important;
+/* White dwarves and neutron stars are brighter still */
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="White Dwarf" i],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type="Neutron Star" i] {
+  fill: #e8f1ff;
+}
+
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="F "] {
+  fill: #fff3d8;
+}
+
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="G "] {
+  fill: #ffc93f;
+}
+
+/* Red dwarves, the most common star there is */
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="M "] {
+  fill: #ff7d1a;
+}
+
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="L "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="T "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="Y "],
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Brown dwarf" i] {
+  fill: #c85c22;
+}
+
+/* A black hole has no surface to light up, just an edge and a halo */
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Black Hole" i] {
+  fill: black;
+}
+
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Black Hole" i] .system-map__planet {
+  stroke: white;
   stroke-width: 100;
-  stroke: white !important;
 }
 
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="White Dwarf" i] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type="Neutron Star" i] .system-map__planet-surface {
-  filter: grayscale(100%) contrast(0.1) brightness(2) drop-shadow(0 0 7rem rgb(118, 173, 245)) drop-shadow(0 0 5rem rgb(53, 114, 255));
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Black Hole" i] .system-map__planet-surface {
+  display: none;
 }
 
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="O "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="B "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="A "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TT "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TTS "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="W "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WC "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WN "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WO "] .system-map__planet-surface {
-  filter: grayscale(100%) contrast(0.2) brightness(1.8) drop-shadow(0 0 5rem rgb(222, 247, 255)) drop-shadow(0 0 10rem white) drop-shadow(0 0 10rem rgb(108, 196, 255));
-}
-
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="G "] .system-map__planet-surface {
-  filter: contrast(0.2) sepia(100%) hue-rotate(350deg) saturate(2) brightness(1.1) contrast(2) drop-shadow(0 0 5rem rgb(255, 236, 129)) drop-shadow(0 0 10rem rgb(255, 236, 129)) drop-shadow(0 0 10rem rgb(255, 166, 0));
-}
-
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="F "] .system-map__planet-surface {
-  filter: contrast(0.2) sepia(100%) hue-rotate(350deg) saturate(1) brightness(1.3) contrast(1.5) drop-shadow(0 0 5rem rgb(255, 244, 181)) drop-shadow(0 0 10rem rgb(255, 242, 168)) drop-shadow(0 0 10rem rgb(255, 220, 154));
-}
-
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="Ae "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="Be "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="K "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="C "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="CH "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="CHd "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="CJ "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="CN "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="CS "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="MS "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WNC "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="S "] .system-map__planet-surface {
-  filter: contrast(0.25) sepia(100%) hue-rotate(330deg) saturate(4) brightness(1.15) contrast(2) drop-shadow(0 0 5rem rgb(255, 236, 129)) drop-shadow(0 0 10rem rgb(255, 194, 81)) drop-shadow(0 0 10rem rgb(255, 187, 61));
-}
-
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="M "] .system-map__planet-surface {
-  filter: contrast(0.25) sepia(100%) hue-rotate(360deg) saturate(4) brightness(.9) contrast(1.5)  drop-shadow(0 0 5rem #ff8c00) drop-shadow(0 0 10rem #ff8c00) drop-shadow(0 0 10rem #ff8c00);
-}
-
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="L "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="Y "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="T "] .system-map__planet-surface,
-.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Brown dwarf" i] .system-map__planet-surface {
-  filter: contrast(0.2) sepia(100%) hue-rotate(300deg) saturate(1.4) brightness(.4)  contrast(2) drop-shadow(0 0 15rem rgb(200,20,20));
+.system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Black Hole" i] .system-map__star-glow {
+  fill: white;
 }
 
 /* 

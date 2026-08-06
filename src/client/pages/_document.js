@@ -112,24 +112,29 @@ class MyDocument extends Document {
           <feComponentTransfer in="shadow" result="shadow"><feFuncA type="linear" slope=".7"/></feComponentTransfer>
           <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
         </filter>
-        <filter id="svg-filter__star-glow">
-          <feOffset dx="0" dy="0"/>
-          <feGaussianBlur stdDeviation="500" result="offset-blur"/>
-          <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
-          <feFlood flood-color="rgba(255,0,0,.5)" flood-opacity="1" result="color"/>
-          <feComposite operator="in" in="color" in2="inverse" result="shadow"/>
-          <feComponentTransfer in="shadow" result="shadow"><feFuncA type="linear" slope="1"/></feComponentTransfer>
-          <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
-        </filter>
-        <filter id="svg-filter__star-glow--light">
-          <feOffset dx="0" dy="0"/>
-          <feGaussianBlur stdDeviation="500" result="offset-blur"/>
-          <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
-          <feFlood flood-color="rgba(255,0,0,.25)" flood-opacity="1" result="color"/>
-          <feComposite operator="in" in="color" in2="inverse" result="shadow"/>
-          <feComponentTransfer in="shadow" result="shadow"><feFuncA type="linear" slope="1"/></feComponentTransfer>
-          <feComposite operator="over" in="shadow" in2="SourceGraphic"/>
-        </filter>
+        <!--
+          A star is drawn as a flat coloured disc with this texture over it and
+          a glow behind, so it needs no filters and looks the same everywhere.
+          The tile is centred on the star, as a star sits at 0,0 and spans 2000
+          either side, so a tile starting at 0,0 would run its edge through the
+          middle of every star.
+        -->
+        <pattern id="svg-pattern__star-surface" patternUnits="userSpaceOnUse" x="-2048" y="-2048" width="4096" height="4096">
+          <image href="/images/textures/star.jpg" x="0" y="0" width="4096" height="4096"/>
+        </pattern>
+        <radialGradient id="svg-gradient__star-glow">
+          <stop offset="0%" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="82%" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="93%" stop-color="#fff" stop-opacity=".14"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <!--
+          Fades the glow out from the edge of the star. A star is always drawn
+          at the centre of its own view box, so this is in the same coordinates.
+        -->
+        <mask id="svg-mask__star-glow" maskUnits="userSpaceOnUse" x="-2500" y="-2500" width="5000" height="5000">
+          <circle cx="0" cy="0" r="2450" fill="url(#svg-gradient__star-glow)"/>
+        </mask>
       </defs>
     </svg>
     <script>
@@ -157,11 +162,13 @@ class MyDocument extends Document {
       // actually from Google and it does not have feature parity with Chrome.
       let ENABLE_PLANET_TEXTURES = false
 
-      // Note: Safari supports SVG textures, but needs special handling as it
-      // doesn't support filters on SVG elements (textured or otherwise), so
-      // they are not enabled on Safari for now (unless/until Apple address the
-      // limitation).
-      if (isIEedge || (isFirefox && !isIOSFirefox)) { 
+      // WebKit renders the textures themselves correctly, it is only filters on
+      // SVG elements it has trouble with, so it is included here. Stars no
+      // longer use filters at all; planet surfaces still do, and the Safari
+      // stylesheet compensates for those.
+      const isWebKit = isSafari || isIOSChrome || isIOSFirefox
+
+      if (isIEedge || (isFirefox && !isIOSFirefox) || isWebKit) {
         ENABLE_PLANET_TEXTURES = true
       } else if (
         // Check is Google Chrome (and not impostor)
@@ -174,13 +181,14 @@ class MyDocument extends Document {
         ENABLE_PLANET_TEXTURES = true
       }
 
+      // Exposed so styles can adapt to it, and so it can be read when working
+      // out why a device renders the map the way it does
+      document.documentElement.dataset.planetTextures = ENABLE_PLANET_TEXTURES
+
       if (ENABLE_PLANET_TEXTURES) {
         document.write(\`
           <svg style="position: absolute; height: 0; margin: 0; padding: 0; top: -100px;">
             <defs>
-              <pattern id="svg-pattern__star-surface" patternUnits="userSpaceOnUse" preserveAspectRatio="none" width="4096" height="4096">
-                <image href="/images/textures/star.jpg" x="0" y="0" width="4096" height="4096"/>
-              </pattern>
               <pattern id="svg-pattern__planet-surface" patternUnits="userSpaceOnUse" preserveAspectRatio="none" width="4096" height="4096">
                 <image href="/images/textures/rock.jpg" x="0" y="0" width="4096" height="4096"/>
               </pattern>
@@ -194,30 +202,8 @@ class MyDocument extends Document {
               <pattern id="svg-pattern__planet-surface--gas-giant" patternUnits="userSpaceOnUse" preserveAspectRatio="none" width="4096" height="4096">
                 <image href="/images/textures/gas-giant.jpg" x="0" y="0" width="4096" height="4096"/>
               </pattern>
-              <pattern id="svg-pattern__planet-surface--brown-dwarf" patternUnits="userSpaceOnUse" preserveAspectRatio="none" width="8192" height="8192">
-                <image href="/images/textures/gas-giant.jpg" x="0" y="0" width="8192" height="8192"/>
-              </pattern>
             </defs>
           </svg>
-          <style>
-            .system-map__system-object[data-system-object-type="Star"] .system-map__planet-surface {
-              fill: url(#svg-pattern__star-surface) !important;
-            }
-            
-            .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Brown dwarf" i] .system-map__planet-surface {
-              fill: url(#svg-pattern__planet-surface--brown-dwarf) !important;
-            }
-          </style>
-        \`)
-      } else {
-        // If the device is not kown to support textures, use a different effect
-        // to render stars that works without textures (uses a radial gradient)
-        document.write(\`
-          <style>
-            .system-map__system-object[data-system-object-type="Star"] .system-map__planet {
-              filter: url(#svg-filter__star-glow) !important;
-            }
-        </style>
         \`)
       }
     </script>
