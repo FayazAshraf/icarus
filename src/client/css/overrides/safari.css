@@ -1,45 +1,24 @@
 /* Safari 10.1+ */
-@media not all and (min-resolution:.001dpcm) {
+@media not all and (min-resolution: 0.001dpcm) {
   @media {
     body {
       font-synthesis: none;
       /* Safari renders with a smaller base font size */
       font-size: 1.3rem !important;
     }
-  
-    /* Safari doesn't apply filters to SVG correctly so we use simple colors */
-    .system-map__system-object[data-system-object-type="Star"] .system-map__planet-surface {
-      fill: orange;
-    }
-
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="O "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="B "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="A "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TT "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="TTS "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="W "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WC "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WN "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="WO "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="White Dwarf" i] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type="Neutron Star" i] .system-map__planet-surface {
-      fill: white;
-    }
-
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="L "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="Y "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type^="T "] .system-map__planet-surface,
-    .system-map__system-object[data-system-object-type="Star"][data-system-object-sub-type*="Brown dwarf" i] .system-map__planet-surface {
-      fill: maroon;
-    }
 
     /* Safari doesn't apply filters to SVG correctly, sp we apply a simple
        fitler to these container classes. */
-    .system-map__planetary-system-star-icon,
     .system-map__planetary-system-map {
       filter: contrast(1.5) !important;
     }
-  
+
+    /* Planet textures are drawn faintly and rely on filters to bring them out,
+       which don't apply here, so the texture is drawn stronger instead. */
+    .system-map__planet-surface {
+      opacity: 0.15;
+    }
+
     /* Safari positions wrings wrongly, so just hide them */
     .system-map__planet-ring {
       display: none;
@@ -47,7 +26,10 @@
 
     /* Safari staight up mangles the rendering of this table */
     table.ship-panel_modules-table.table--interactive tbody tr,
-    table.ship-panel_modules-table.table--flex-inline.table--interactive tbody tr td {
+    table.ship-panel_modules-table.table--flex-inline.table--interactive
+      tbody
+      tr
+      td {
       animation: none !important;
       opacity: 1 !important;
       animation-fill-mode: none !important;
@@ -63,7 +45,7 @@
     }
 
     table:not(.table--layout) tbody tr {
-      border-top-color: rgba(0,0,0,.6) !important;
+      border-top-color: rgba(0, 0, 0, 0.6) !important;
     }
 
     @supports (-webkit-touch-callout: none) {
@@ -71,7 +53,7 @@
 
       /* Some versions of Safari (e.g. iOS) incorrectly apply a fade to the 
        system map view so the easiest thing is to just disable the animation */
-      .navigation-panel__map-background { 
+      .navigation-panel__map-background {
         animation: none;
       }
     }
